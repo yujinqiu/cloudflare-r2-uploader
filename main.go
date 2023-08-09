@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"mime"
@@ -25,6 +26,28 @@ var (
 	accessKeyId     = ""
 	accessKeySecret = ""
 )
+
+type ProgressReader struct {
+	reader   io.Reader
+	total    int64
+	read     int64
+	progress func(int64, int64)
+}
+
+func (pr *ProgressReader) Read(p []byte) (int, error) {
+	n, err := pr.reader.Read(p)
+	pr.read += int64(n)
+	pr.progress(pr.read, pr.total)
+	return n, err
+}
+
+func NewProgressReader(reader io.Reader, total int64, progress func(int64, int64)) *ProgressReader {
+	return &ProgressReader{
+		reader:   reader,
+		total:    total,
+		progress: progress,
+	}
+}
 
 func main() {
 	viper.SetEnvPrefix("CFR2")
@@ -130,17 +153,27 @@ func uploadCmd() *cobra.Command {
 
 						log.Printf("uploading [% 4d] %s as %s", count, key, mimeType)
 
-						file, err := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
+						file, err := os.Open(path)
 						if err != nil {
 							log.Fatalln(err)
 						}
 						defer file.Close()
 
+						fileInfo, err := file.Stat()
+						if err != nil {
+							panic(err)
+						}
+
+						progressReader := NewProgressReader(file, fileInfo.Size(), func(read, total int64) {
+							fmt.Printf("Uploaded %d out of %d bytes (%.2f%%)\n", read, total, 100*float64(read)/float64(total))
+						})
+
 						_, err = client.PutObject(ctx, &s3.PutObjectInput{
-							Bucket:      aws.String(bucketName),
-							Key:         aws.String(key),
-							Body:        file,
-							ContentType: aws.String(mimeType),
+							Bucket:        aws.String(bucketName),
+							Key:           aws.String(key),
+							Body:          progressReader,
+							ContentType:   aws.String(mimeType),
+							ContentLength: fileInfo.Size(),
 						})
 						if err != nil {
 							log.Fatalln(err)
@@ -175,17 +208,27 @@ func uploadCmd() *cobra.Command {
 				} else {
 					mimeType := mime.TypeByExtension(filepath.Ext(localPath))
 
-					file, err := os.OpenFile(localPath, os.O_RDONLY, os.ModePerm)
+					file, err := os.Open(localPath)
 					if err != nil {
 						log.Fatalln(err)
 					}
 					defer file.Close()
 
+					fileInfo, err := file.Stat()
+					if err != nil {
+						panic(err)
+					}
+
+					progressReader := NewProgressReader(file, fileInfo.Size(), func(read, total int64) {
+						fmt.Printf("Uploaded %d out of %d bytes (%.2f%%)\n", read, total, 100*float64(read)/float64(total))
+					})
+
 					_, err = client.PutObject(ctx, &s3.PutObjectInput{
-						Bucket:      aws.String(bucketName),
-						Key:         aws.String(key),
-						Body:        file,
-						ContentType: aws.String(mimeType),
+						Bucket:        aws.String(bucketName),
+						Key:           aws.String(key),
+						Body:          progressReader,
+						ContentType:   aws.String(mimeType),
+						ContentLength: fileInfo.Size(),
 					})
 					if err != nil {
 						log.Fatalln(err)
