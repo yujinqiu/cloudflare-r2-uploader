@@ -77,7 +77,7 @@ func uploadCmd() *cobra.Command {
 				log.Fatal(err)
 			}
 
-			ctx, cancelFn := context.WithTimeout(context.Background(), time.Minute)
+			ctx, cancelFn := context.WithTimeout(context.Background(), time.Hour)
 			defer cancelFn()
 
 			client := s3.NewFromConfig(cfg)

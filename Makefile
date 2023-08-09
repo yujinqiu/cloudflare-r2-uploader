@@ -7,6 +7,9 @@ release:
 
 	GOOS=windows GOARCH=amd64 make build-windows
 
+macos:
+	GOOS=darwin GOARCH=arm64 make build-unix
+
 # build unix binrary
 build-unix:
 	mkdir -p dist/$(GOOS)-$(GOARCH)

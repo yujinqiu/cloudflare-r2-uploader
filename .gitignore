@@ -37,3 +37,4 @@ bin/
 *.swp
 
 test.sh
+dist/*
