@@ -105,7 +105,7 @@ func uploadCmd() *cobra.Command {
 
 			client := s3.NewFromConfig(cfg)
 
-			log.Printf("upload \"%s\" to \"%s\"", localPath, remotePath)
+			log.Printf("Upload \"%s\" to \"%s\"", localPath, remotePath)
 
 			info, err := os.Stat(localPath)
 			if err != nil {
@@ -151,7 +151,7 @@ func uploadCmd() *cobra.Command {
 					} else {
 						mimeType := mime.TypeByExtension(filepath.Ext(path))
 
-						log.Printf("uploading [% 4d] %s as %s", count, key, mimeType)
+						log.Printf("Uploading [% 4d] %s as %s", count, key, mimeType)
 
 						file, err := os.Open(path)
 						if err != nil {
@@ -165,7 +165,7 @@ func uploadCmd() *cobra.Command {
 						}
 
 						progressReader := NewProgressReader(file, fileInfo.Size(), func(read, total int64) {
-							fmt.Printf("Uploaded %d out of %d bytes (%.2f%%)\n", read, total, 100*float64(read)/float64(total))
+							fmt.Printf("\rUploaded %d out of %d bytes (%.2f%%)", read, total, 100*float64(read)/float64(total))
 						})
 
 						_, err = client.PutObject(ctx, &s3.PutObjectInput{
@@ -185,7 +185,7 @@ func uploadCmd() *cobra.Command {
 					return nil
 				})
 
-				log.Printf("uploaded %d files, skipped %d files", count, skipped)
+				log.Printf("\nUploaded %d files, skipped %d files", count, skipped)
 			} else {
 				key := remotePath
 
@@ -220,7 +220,7 @@ func uploadCmd() *cobra.Command {
 					}
 
 					progressReader := NewProgressReader(file, fileInfo.Size(), func(read, total int64) {
-						fmt.Printf("Uploaded %d out of %d bytes (%.2f%%)\n", read, total, 100*float64(read)/float64(total))
+						fmt.Printf("\rUploaded %d out of %d bytes (%.2f%%)", read, total, 100*float64(read)/float64(total))
 					})
 
 					_, err = client.PutObject(ctx, &s3.PutObjectInput{
@@ -236,7 +236,7 @@ func uploadCmd() *cobra.Command {
 				}
 			}
 
-			log.Println("complete")
+			log.Println("\nUpload complete.")
 		},
 	}
 

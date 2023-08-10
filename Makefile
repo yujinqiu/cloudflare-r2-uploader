@@ -5,22 +5,14 @@ release:
 	GOOS=darwin GOARCH=amd64 make build-unix
 	GOOS=darwin GOARCH=arm64 make build-unix
 
-	GOOS=windows GOARCH=amd64 make build-windows
-
 macos:
 	GOOS=darwin GOARCH=arm64 make build-unix
+	install -v dist/darwin-arm64/cloudflare-r2 ${GOPATH}/bin
 
 # build unix binrary
 build-unix:
 	mkdir -p dist/$(GOOS)-$(GOARCH)
-	go build -o dist/$(GOOS)-$(GOARCH)/cloudflare-r2-uploader
-	cd dist/$(GOOS)-$(GOARCH) && tar -zvcf ../cloudflare-r2-uploader-$(GOOS)-$(GOARCH).tar.gz cloudflare-r2-uploader
-
-# build windows binrary
-build-windows:
-	mkdir -p dist/$(GOOS)-$(GOARCH)
-	go build -o dist/$(GOOS)-$(GOARCH)/cloudflare-r2-uploader.exe
-	cd dist/$(GOOS)-$(GOARCH) && tar -zvcf ../cloudflare-r2-uploader-$(GOOS)-$(GOARCH).tar.gz cloudflare-r2-uploader.exe
+	go build -o dist/$(GOOS)-$(GOARCH)/cloudflare-r2
 
 # show help
 .PHONY: help
